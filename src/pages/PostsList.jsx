@@ -8,6 +8,9 @@ import PostModal from "../components/shared/PostModal";
 import PostCardSkeleton from "../components/PostCardSkeleton";
 import ExpandableText from "../components/ExpandableText";
 import PaginationControls from "../components/PaginationControls";
+import { Link } from "react-router-dom";
+import ReactionButtons from "../components/reactions/ReactionButtons";
+
 const PostsList = () => {
   const [posts, setPosts] = useState([]);
   const [editingPostId, setEditingPostId] = useState(null);
@@ -44,6 +47,8 @@ const PostsList = () => {
       const postsWithNewIds = data.map((post) => ({
         ...post,
         id: post._id,
+        reactionCounts: new Map(Object.entries(post.reactionCounts || {})),
+        userReactions: new Map(Object.entries(post.userReactions || {})),
       }));
 
       setPosts(postsWithNewIds);
@@ -178,7 +183,29 @@ const PostsList = () => {
       setIsSubmittingNewPost(false);
     }
   };
-  //** --- End New Post Handling --- **//
+
+  //** handle reaction functionality***/
+  const handleReactionToggledInList = (
+    updatedPostData,
+    newUserReactionType
+  ) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((p) =>
+        p._id === updatedPostData._id
+          ? {
+              ...p,
+              ...updatedPostData,
+              reactionCounts: new Map(
+                Object.entries(updatedPostData.reactionCounts || {})
+              ),
+              userReactions: new Map(
+                Object.entries(updatedPostData.userReactions || {})
+              ),
+            }
+          : p
+      )
+    );
+  };
 
   return (
     <div className="min-h-screen dark:bg-gray-900 py-8 relative">
@@ -265,8 +292,17 @@ const PostsList = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {posts.map((post) => {
-              const displayBtns = user && user._id === post.author._id;
-
+              const displayBtns =
+                user && post.author && user._id === post.author._id;
+              const postLink = `/posts/${post.id}`;
+              const currentUserReactionTypeForThisPost =
+                user && post.userReactions
+                  ? post.userReactions.get(user._id) || null
+                  : null;
+              const reactionCountsForThisPost =
+                post.reactionCounts instanceof Map
+                  ? post.reactionCounts
+                  : new Map(Object.entries(post.reactionCounts || {}));
               return (
                 <div
                   key={post.id}
@@ -288,32 +324,50 @@ const PostsList = () => {
                   ) : (
                     <>
                       {post.imageUrl && (
-                        <div className="relative overflow-hidden">
-                          <img
-                            src={post.imageUrl}
-                            alt={post.title}
-                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                        </div>
+                        <Link to={postLink} className="block">
+                          <div className="relative overflow-hidden">
+                            <img
+                              src={post.imageUrl}
+                              alt={post.title}
+                              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                          </div>
+                        </Link>
                       )}
 
                       <div className="p-6">
-                        <h2 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2">
-                          {post.title}
-                        </h2>
+                        <Link to={postLink}>
+                          <h2 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2">
+                            {post.title}
+                          </h2>
+                        </Link>
 
                         <ExpandableText text={post.content} limit={150} />
+
+                          {/* --- REACTION BUTTONS --- */}
+                        <div className="mt-4">
+                          <ReactionButtons
+                            postId={post._id}
+                            className={"border-t-0 border-b-0"}
+                            initialReactionCounts={reactionCountsForThisPost}
+                            initialUserReaction={
+                              currentUserReactionTypeForThisPost
+                            }
+                            onReactionToggled={handleReactionToggledInList}
+                          />
+                        </div>
+                        {/* --- END REACTION BUTTONS --- */}
 
                         <div className="flex justify-between items-center">
                           {/* author */}
                           <div className="flex justify-between items-center gap-1">
                             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                               <span className="text-white text-sm font-semibold">
-                                {post.author.username.charAt(0).toUpperCase()}
+                                {post.author.username.charAt(0).toUpperCase() || 'A'}
                               </span>
                             </div>
                             <div className="flex justify-between items-center gap-1">
@@ -338,6 +392,10 @@ const PostsList = () => {
                             </p>
                           </div>
                         </div>
+
+
+                      
+
 
                         {displayBtns && (
                           <div className="flex gap-3 pt-4 border-t border-gray-100">

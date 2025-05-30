@@ -3,9 +3,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PostsList from "./pages/PostsList";
 import { Toaster } from "react-hot-toast";
-// import CreatePost from './pages/CreatePost';
 import LayoutWithNavbar from "./components/LayoutWithNavbar";
-import ProtectedRoute from "./components/ProtectedRoute";
+import PostDetailPage from "./pages/PostDetailPage";
 
 import "./App.css";
 
@@ -17,7 +16,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route element={<LayoutWithNavbar />}>
-        <Route path="/" element={<PostsList />} />
+          <Route path="/" element={<PostsList />} />
+          <Route path="/posts" element={<PostsList />} />
+          <Route path="/posts/:postId" element={<PostDetailPage />} />
         </Route>
       </Routes>
     </Router>
