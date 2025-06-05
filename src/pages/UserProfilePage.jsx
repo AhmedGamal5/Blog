@@ -189,7 +189,7 @@ const UserProfilePage = () => {
                       </div>
                        {isOwnProfile && (  
                         <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-2">
-                            <Link to={`/posts/${post._id}/edit`} className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">Edit</Link>
+                            <Link to={`/posts/${post._id}`} className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-2 rounded">Edit</Link>
                         </div>
                        )}
                     </div>
