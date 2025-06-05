@@ -12,6 +12,7 @@ import {
 } from "../services/commentService";
 import AddCommentForm from "../components/AddCommentForm";
 import ReactionButtons from "../components/reactions/ReactionButtons";
+import TimeAgo from "../components/shared/TimeAgo";
 
 const COMMENTS_PER_PAGE = 5;
 const PostDetailSkeleton = () => (
@@ -73,17 +74,15 @@ const PostDetailPage = () => {
       setLoading(true);
       setError("");
       try {
-        const res = await API.get(`/posts/${postId}`);         
-         
+        const res = await API.get(`/posts/${postId}`);
+
         setPost({
           ...res.data,
-          id: res.data._id,  
+          id: res.data._id,
           reactionCounts: new Map(
-            Object.entries(res.data.reactionCounts || {})  
+            Object.entries(res.data.reactionCounts || {})
           ),
-          userReactions: new Map(
-            Object.entries(res.data.userReactions || {})  
-          ),
+          userReactions: new Map(Object.entries(res.data.userReactions || {})),
         });
       } catch (err) {
         console.error("Failed to fetch post:", err);
@@ -91,7 +90,7 @@ const PostDetailPage = () => {
           err.response?.data?.message ||
             "Failed to load post. It might not exist or there was a network issue."
         );
-        toast.error("Failed to load post."); 
+        toast.error("Failed to load post.");
       } finally {
         setLoading(false);
       }
@@ -100,7 +99,7 @@ const PostDetailPage = () => {
     if (postId) {
       fetchPost();
     }
-  }, [postId]); 
+  }, [postId]);
 
   //**** handle delete post functionality *****/
   const openDeleteModal = () => {
@@ -221,7 +220,7 @@ const PostDetailPage = () => {
                 ...comment,
                 ...updatedCommentData.data,
                 content: editingCommentContent,
-              } // Ensure structure matches
+              }
             : comment
         )
       );
@@ -380,7 +379,10 @@ const PostDetailPage = () => {
                 ) : (
                   <span>By Anonymous</span>
                 )}
-                <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                <span>
+                  {new Date(post.createdAt).toLocaleDateString()}
+                  {/* <TimeAgo timestamp={comment.createdAt} /> */}
+                </span>
               </div>
 
               <div className="prose prose-lg dark:prose-invert max-w-none text-gray-800 dark:text-gray-200">
@@ -492,12 +494,7 @@ const PostDetailPage = () => {
                           {comment.author?.username || "Anonymous"}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(comment.createdAt).toLocaleDateString()}
-                          {" at "}
-                          {new Date(comment.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          <TimeAgo timestamp={comment.createdAt} />
                         </p>
                       </div>
                       {editingCommentId === comment._id ? (
@@ -536,28 +533,49 @@ const PostDetailPage = () => {
                           <p className="mt-1 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                             {comment.content}
                           </p>
-                          {user &&
-                            comment.author &&
-                            user._id === comment.author._id && (
+                          {(() => {
+                            if (!user || !comment.author || !post?.author) {
+                              return null;
+                            }
+
+                            const isCommentAuthor =
+                              user._id === comment.author._id;
+
+                            const isPostAuthor = user._id === post.author._id;
+
+                            const canDeleteComment =
+                              isCommentAuthor || isPostAuthor;
+                            const canEditComment = isCommentAuthor;
+
+                            if (!canEditComment && !canDeleteComment) {
+                              return null;
+                            }
+
+                            return (
                               <div className="mt-2 flex space-x-3">
-                                <button
-                                  onClick={() =>
-                                    handleEditCommentClick(comment)
-                                  }
-                                  className="text-xs text-blue-500 hover:underline"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    openCommentDeleteModal(comment._id)
-                                  } // <-- MODIFIED
-                                  className="text-xs text-red-500 hover:underline"
-                                >
-                                  Delete
-                                </button>
+                                {canEditComment && (
+                                  <button
+                                    onClick={() =>
+                                      handleEditCommentClick(comment)
+                                    }
+                                    className="text-xs text-blue-500 hover:underline"
+                                  >
+                                    Edit
+                                  </button>
+                                )}
+                                {canDeleteComment && (
+                                  <button
+                                    onClick={() =>
+                                      openCommentDeleteModal(comment._id)
+                                    }
+                                    className="text-xs text-red-500 hover:underline"
+                                  >
+                                    Delete
+                                  </button>
+                                )}
                               </div>
-                            )}
+                            );
+                          })()}
                         </>
                       )}
                     </div>

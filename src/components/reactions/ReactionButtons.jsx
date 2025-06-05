@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { togglePostReaction } from "../../services/reactionService";
 import toast from "react-hot-toast";

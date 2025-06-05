@@ -10,6 +10,7 @@ import ExpandableText from "../components/ExpandableText";
 import PaginationControls from "../components/PaginationControls";
 import { Link } from "react-router-dom";
 import ReactionButtons from "../components/reactions/ReactionButtons";
+import TimeAgo from "../components/shared/TimeAgo";
 
 const PostsList = () => {
   const [posts, setPosts] = useState([]);
@@ -186,26 +187,29 @@ const PostsList = () => {
 
   //** handle reaction functionality***/
   const handleReactionToggledInList = (
-    updatedPostData,
-    newUserReactionType
-  ) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((p) =>
-        p._id === updatedPostData._id
-          ? {
-              ...p,
-              ...updatedPostData,
-              reactionCounts: new Map(
-                Object.entries(updatedPostData.reactionCounts || {})
-              ),
-              userReactions: new Map(
-                Object.entries(updatedPostData.userReactions || {})
-              ),
-            }
-          : p
-      )
-    );
-  };
+  updatedPostData,  
+  newUserReactionType 
+) => {
+  setPosts((prevPosts) =>
+    prevPosts.map((currentPostInList) => {
+      if (currentPostInList._id === updatedPostData._id) {
+        return {
+          ...currentPostInList,  
+          
+          reactionCounts: new Map(
+            Object.entries(updatedPostData.reactionCounts || {})
+          ),
+          userReactions: new Map(
+            Object.entries(updatedPostData.userReactions || {})
+          ),
+        };
+      } else {
+        return currentPostInList;
+      }
+    })
+  );
+};
+
 
   return (
     <div className="min-h-screen dark:bg-gray-900 py-8 relative">
@@ -299,10 +303,9 @@ const PostsList = () => {
                 user && post.userReactions
                   ? post.userReactions.get(user._id) || null
                   : null;
-              const reactionCountsForThisPost =
-                post.reactionCounts instanceof Map
-                  ? post.reactionCounts
-                  : new Map(Object.entries(post.reactionCounts || {}));
+              const reactionCountsForThisPost = new Map(
+                Object.entries(post.reactionCounts || {})
+              );
               return (
                 <div
                   key={post.id}
@@ -348,7 +351,7 @@ const PostsList = () => {
 
                         <ExpandableText text={post.content} limit={150} />
 
-                          {/* --- REACTION BUTTONS --- */}
+                        {/* --- REACTION BUTTONS --- */}
                         <div className="mt-4">
                           <ReactionButtons
                             postId={post._id}
@@ -367,20 +370,22 @@ const PostsList = () => {
                           <div className="flex justify-between items-center gap-1">
                             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                               <span className="text-white text-sm font-semibold">
-                                {post.author.username.charAt(0).toUpperCase() || 'A'}
+                                {post.author.username
+                                  ?.charAt(0)
+                                  ?.toUpperCase() || "A"}
                               </span>
                             </div>
                             <div className="flex justify-between items-center gap-1">
                               <p className="text-xs text-gray-600">Author:</p>
                               <p className="text-xs font-medium text-gray-600">
                                 {post.author.username
-                                  .split(" ")
+                                  ?.split(" ")
                                   .map(
                                     (name) =>
                                       name.charAt(0).toUpperCase() +
                                       name.slice(1).toLowerCase()
                                   )
-                                  .join(" ")}
+                                  .join(" ") || "Unknown Author"}
                               </p>
                             </div>
                           </div>
@@ -388,14 +393,11 @@ const PostsList = () => {
                           <div className="flex justify-between items-center gap-1">
                             <p className="text-xs text-gray-600">Date:</p>
                             <p className="text-xs font-medium text-gray-600">
-                              {new Date(post.createdAt).toLocaleDateString()}
+                              {/* {new Date(post.createdAt).toLocaleDateString()} */}
+                              <TimeAgo timestamp={post.createdAt} />
                             </p>
                           </div>
                         </div>
-
-
-                      
-
 
                         {displayBtns && (
                           <div className="flex gap-3 pt-4 border-t border-gray-100">
